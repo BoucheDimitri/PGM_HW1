@@ -6,10 +6,6 @@ def sigmoid(x):
     return 1 / (1 + np.exp(-x))
 
 
-def sigmoid_prime(x):
-    return sigmoid(x) * (1 - sigmoid(x))
-
-
 def likelihood_gradient(x, y, w, b):
     d = x.shape[0]
     grad = np.zeros((d + 1, ))
@@ -30,8 +26,28 @@ def likelihood_hessian(x, w, b):
     hess[1:, 0] = u
     D = np.zeros((n, n))
     np.fill_diagonal(D, z * (1 - z))
-    print(x.shape)
-    print(D.shape)
     hess[1:, 1:] = np.dot(np.dot(x, D), x.T)
     return hess
+
+
+def newton_mle(x, y, w0, b, pace, maxit, epsilon):
+    wb = np.concatenate((w0.copy(), np.array([b])))
+    for i in range(0, maxit):
+        grad = likelihood_gradient(x, y, wb[1:], wb[0])
+        hess = likelihood_hessian(x, wb[1:], wb[0])
+        hess_inv = np.linalg.inv(hess)
+        delta = np.dot(hess_inv, grad)
+        lamb_sqr = np.dot(np.dot(grad.T, hess_inv), grad)
+        if lamb_sqr / 2 <= epsilon:
+            return wb[1:], wb[0]
+        wb += pace * delta
+        print(i)
+    return wb[1:], wb[0]
+
+
+def proba_level_line(x1, w, b, q):
+    lq = np.log((1-q) / q)
+    return (- 1 / w[1]) * (w[0] * x1 - b - lq)
+
+
 

@@ -26,8 +26,10 @@ for lab in abc:
 
 x = data[("A", "train")].iloc[:, :2].values.T
 y = data[("A", "train")].iloc[:, 2].values.T
-w = np.array([1, 1])
-b = 1
+w = np.array([1.0, 1.0])
+b = 1.0
 
 grad = logistic.likelihood_gradient(x, y, w, b)
 hess = logistic.likelihood_hessian(x, w, b)
+
+w, b = logistic.newton_mle(x, y, w, b, 0.00005, 100, 0.00001)
