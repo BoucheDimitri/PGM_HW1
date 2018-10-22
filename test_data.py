@@ -47,9 +47,8 @@ ax.plot(sep_x1, sep_x2)
 ##############LOGISTIC TEST#########################
 xlogistic = logistic.add_intercept_col(x)
 
-bw = np.array([1.0, 1.0, 1.0])
-print(logistic.diag_p_1minusp(xlogistic, bw))
-bwbis = logistic.irls_update(xlogistic, y, bw)
+bw = np.array([0, 0, 0])
+bwbis = logistic.iter_irls(xlogistic, y, bw, 0.005, 15)
 
 
 
@@ -60,9 +59,9 @@ bwbis = logistic.irls_update(xlogistic, y, bw)
 
 
 fig, ax = plt.subplots()
-ax.scatter(x[0, :], x[1, :])
+ax.scatter(x[:, 0], x[:, 1])
 sep_x1 = np.linspace(ax.get_xlim()[0], ax.get_xlim()[1])
-sep_x2 = logistic.proba_level_line(sep_x1, w, b, 0.5)
+sep_x2 = logistic.proba_level_line(sep_x1, bwbis, 0.5)
 ax.plot(sep_x1, sep_x2)
 
 
