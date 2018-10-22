@@ -5,44 +5,75 @@ import pandas as pd
 def sigmoid(x):
     return 1 / (1 + np.exp(-x))
 
+#
+# def likelihood_gradient(x, y, w, b):
+#     d = x.shape[0]
+#     grad = np.zeros((d + 1, ))
+#     z = sigmoid(np.dot(w, x) + b)
+#     grad[0] = np.sum(y - z)
+#     grad[1:] = np.dot(x, y - z)
+#     return grad
+#
+#
+# def likelihood_hessian(x, w, b):
+#     d = x.shape[0]
+#     n = x.shape[1]
+#     hess = np.zeros((d + 1, d + 1))
+#     z = sigmoid(np.dot(w, x) + b)
+#     hess[0, 0] = - np.dot(z.T, 1 - z)
+#     u = - np.dot(x, z * (1 - z))
+#     hess[0, 1:] = u
+#     hess[1:, 0] = u
+#     D = np.zeros((n, n))
+#     np.fill_diagonal(D, z * (1 - z))
+#     hess[1:, 1:] = np.dot(np.dot(x, D), x.T)
+#     return hess
 
-def likelihood_gradient(x, y, w, b):
-    d = x.shape[0]
-    grad = np.zeros((d + 1, ))
-    z = sigmoid(np.dot(w, x) + b)
-    grad[0] = np.sum(y - z)
-    grad[1:] = np.dot(x, y - z)
-    return grad
+
+def add_intercept_col(x):
+    n = x.shape[0]
+    ones = np.ones((n, 1))
+    return np.concatenate((ones, x), axis=1)
 
 
-def likelihood_hessian(x, w, b):
-    d = x.shape[0]
-    n = x.shape[1]
-    hess = np.zeros((d + 1, d + 1))
-    z = sigmoid(np.dot(w, x) + b)
-    hess[0, 0] = - np.dot(z.T, 1 - z)
-    u = - np.dot(x, z * (1 - z))
-    hess[0, 1:] = u
-    hess[1:, 0] = u
-    D = np.zeros((n, n))
-    np.fill_diagonal(D, z * (1 - z))
-    hess[1:, 1:] = np.dot(np.dot(x, D), x.T)
-    return hess
+def probas_vec(x, bw):
+    p = sigmoid(np.dot(x, bw))
+    return p
 
 
-def newton_mle(x, y, w0, b, pace, maxit, epsilon):
-    wb = np.concatenate((w0.copy(), np.array([b])))
-    for i in range(0, maxit):
-        grad = likelihood_gradient(x, y, wb[1:], wb[0])
-        hess = likelihood_hessian(x, wb[1:], wb[0])
-        hess_inv = np.linalg.inv(hess)
-        delta = np.dot(hess_inv, grad)
-        lamb_sqr = np.dot(np.dot(grad.T, hess_inv), grad)
-        if lamb_sqr / 2 <= epsilon:
-            return wb[1:], wb[0]
-        wb += pace * delta
-        print(i)
-    return wb[1:], wb[0]
+def diag_p_1minusp(x, bw):
+    n = x.shape[0]
+    p = probas_vec(x, bw)
+    diag = np.zeros((n, n))
+    np.fill_diagonal(diag, p * (1 - p))
+    return diag
+
+
+def irls_update(x, y, bw):
+    p = probas_vec(x, bw)
+    diag = diag_p_1minusp(x, bw)
+    minus_hess = np.dot(x.T, np.dot(diag, x))
+    minus_hess_inv = np.linalg.inv(minus_hess)
+    z = np.dot(x, bw) + np.dot(1 / diag, y - p)
+    v = np.dot(np.dot(x.T, diag), z)
+    return np.dot(minus_hess_inv, v)
+#
+#
+#
+#
+# def newton_mle(x, y, w0, b, pace, maxit, epsilon):
+#     wb = np.concatenate((w0.copy(), np.array([b])))
+#     for i in range(0, maxit):
+#         grad = likelihood_gradient(x, y, wb[1:], wb[0])
+#         hess = likelihood_hessian(x, wb[1:], wb[0])
+#         hess_inv = np.linalg.inv(hess)
+#         delta = np.dot(hess_inv, grad)
+#         lamb_sqr = np.dot(np.dot(grad.T, hess_inv), grad)
+#         if lamb_sqr / 2 <= epsilon:
+#             return wb[1:], wb[0]
+#         wb += pace * delta
+#         print(i)
+#     return wb[1:], wb[0]
 
 
 def proba_level_line(x1, w, b, q):
