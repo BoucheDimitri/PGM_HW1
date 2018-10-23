@@ -123,12 +123,13 @@ def posterior_proba_lda(xtest, pi, w, b):
         np.ndarray: vector of posterior probabilities
     """
     xwtest = np.dot(xtest, w)
-    pifrac = pi / (1 - pi)
-    return 1 / (1 + pifrac * np.exp(xwtest) + b)
+    pifrac = (1 - pi) / pi
+    return 1 / (1 + pifrac * np.exp(xwtest + b))
 
 
-def classify_lda():
-    return 0
+def classify_lda(xtest_mat, pi, w, b):
+    n = xtest_mat.shape[0]
+    ytest = np.zeros((n,))
 
 
 def conic_coefs(pi, mu0, mu1, sigma0, sigma1):
@@ -159,9 +160,11 @@ def discriminant_func_qda(xtest, pi, mu, sigma_inv):
            + np.log(pi)
 
 
-def classify_qda(xtest, pi, mu0, mu1, sigma0_inv, sigma1_inv):
-    return discriminant_func_qda(xtest, pi, mu1, sigma1_inv) / discriminant_func_qda(xtest, 1 - pi, mu0, sigma0_inv)
-
-
-#
-# def classify_qda()
+def classify_qda(xtest_mat, pi, mu0, mu1, sigma0_inv, sigma1_inv):
+    n = xtest_mat.shape[0]
+    ytest = np.zeros((n, ))
+    for i in range(0, n):
+        ytest[i] = np.sign(discriminant_func_qda(xtest_mat[i, :], pi, mu1, sigma1_inv)
+                           - discriminant_func_qda(xtest_mat[i, :], 1 - pi, mu0, sigma0_inv))
+    ytest[ytest == -1] = 0
+    return ytest

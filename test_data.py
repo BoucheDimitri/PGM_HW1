@@ -32,13 +32,14 @@ y = xypd.iloc[:, 2].values
 
 pi = discriminant.mle_pi(xypd)
 mu0, mu1 = discriminant.mle_mus(xypd)
-sigma = discriminant.mle_sigma(xypd)
+sigma = discriminant.mle_sigma_lda(xypd)
 sigma_inv = np.linalg.inv(sigma)
 w = discriminant.get_w_lda(sigma_inv, mu0, mu1)
 b = discriminant.get_b_lda(sigma_inv, mu0, mu1)
+ytest = discriminant.posterior_proba_lda(x, pi, w, b)
 
 fig, ax = plt.subplots()
-ax.scatter(x[0, :], x[1, :])
+ax.scatter(x[:, 0], x[:, 1])
 sep_x1 = np.linspace(ax.get_xlim()[0], ax.get_xlim()[1])
 sep_x2 = discriminant.proba_level_line_lda(sep_x1, pi, w, b, 0.5)
 ax.plot(sep_x1, sep_x2)
@@ -51,7 +52,7 @@ sigma0_inv = np.linalg.inv(sigma0)
 sigma1_inv = np.linalg.inv(sigma1)
 a, b, c, d, e, f = discriminant.conic_coefs(pi, mu0, mu1, sigma0, sigma1)
 xx0, xx1, zz = discriminant.contours_qda(pi, mu0, mu1, sigma0_inv, sigma1_inv, (0, 10), (0, 10))
-ytest
+ytest = discriminant.classify_qda(x, pi, mu0, mu1, sigma0_inv, sigma1_inv)
 
 fig, ax = plt.subplots()
 ax.scatter(x[:, 0], x[:, 1])
