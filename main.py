@@ -9,11 +9,6 @@ import discriminant
 import miscs
 import logistic
 import linear
-importlib.reload(discriminant)
-importlib.reload(miscs)
-importlib.reload(logistic)
-importlib.reload(linear)
-
 
 
 ################### DATA LOADING ###########################################################
@@ -178,6 +173,7 @@ for lab in abc:
     # QDA
     axes[1, 1].scatter(xypd[xypd.y == 0].x1, xypd[xypd.y == 0].x2, label="0")
     axes[1, 1].scatter(xypd[xypd.y == 1].x1, xypd[xypd.y == 1].x2, label="1")
+    # Represent the  line p(y=1|x) as a conic section for QDA
     xx1, xx2 = np.meshgrid(np.linspace(xlim[0], xlim[1], 1000), np.linspace(ylim[0], ylim[1], 1000))
     a, b, c, d, e, f = discriminant.conic_coefs(est_qda[lab][0],
                                                 est_qda[lab][1],

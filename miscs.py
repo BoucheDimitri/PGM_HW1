@@ -18,4 +18,4 @@ def add_intercept_col(x):
 
 
 def zero_one_score(ypred, ytrue):
-    return 1 - np.mean(np.abs(ypred - ytrue))
+    return round(np.mean(np.abs(ypred - ytrue)), 3)

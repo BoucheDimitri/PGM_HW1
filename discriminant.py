@@ -42,22 +42,40 @@ def mle_mus(xy):
 
 def mle_sigma(xy, i):
     """
+    Empirical covariance matrix restricted to one class
+
+    Params:
+        xy (pandas.core.frame.DataFrame with columns): (first dim of x, second dim of x, label)
+
+    Returns:
+       np.ndarray
+    """
+    return xy[xy.y == i].iloc[:, :2].cov()
+
+
+def mle_sigma_lda(xy):
+    """
     MLE for covariance matrix in LDA
 
     Params:
         xy (pandas.core.frame.DataFrame with columns): (first dim of x, second dim of x, label)
 
     Returns:
-       np.ndarray: MLE for sigma
+       np.ndarray
     """
-    return xy[xy.y == i].iloc[:, :2].cov()
-
-
-def mle_sigma_lda(xy):
     return mle_sigma(xy, 0) + mle_sigma(xy, 1)
 
 
 def mle_sigmas_qda(xy):
+    """
+    MLEs for the two covariance matrixes in QDA
+
+    Params:
+        xy (pandas.core.frame.DataFrame with columns): (first dim of x, second dim of x, label)
+
+    Returns:
+       np.ndarray
+    """
     return mle_sigma(xy, 0), mle_sigma(xy, 1)
 
 
@@ -128,6 +146,18 @@ def posterior_proba_lda(xtest, pi, w, b):
 
 
 def classify_lda(xtest_mat, pi, w, b):
+    """
+    Classification using LDA
+
+    Params:
+        xtest_mat (np.ndarray): matrix of datapoints to classify
+        pi (float): MLE for pi
+        w (np.ndarray): the vector of parameters
+        b (float): the intercept
+
+    Returns:
+        np.ndarray: vector of predicted labels
+    """
     probas = posterior_proba_lda(xtest_mat, pi, w, b)
     ytest = np.sign(probas - 0.5)
     ytest[ytest == -1] = 0
@@ -137,6 +167,16 @@ def classify_lda(xtest_mat, pi, w, b):
 def conic_coefs(pi, mu0, mu1, sigma0, sigma1):
     """
     Compute the coefficient of the conic section defining the decision boundary for QDA
+
+    Params:
+        pi (float): MLE for pi
+        mu0 (np.ndarray): MLE for mu0
+        mu1 (np.ndarray): MLE for mu1
+        sigma0 (np.ndarray): MLE of sigma0
+        sigma1 (np.ndarray): MLE of sigma1
+
+    Returns:
+        float: Intercept
     """
     sigma0_inv = np.linalg.inv(sigma0)
     sigma1_inv = np.linalg.inv(sigma1)
@@ -149,20 +189,39 @@ def conic_coefs(pi, mu0, mu1, sigma0, sigma1):
     return 0.5*diff_sig[1, 1], 0.5*diff_sig[0, 0], diff_sig[0, 1], - diff_lamb[1], - diff_lamb[0], nu0 - nu1
 
 
-def contours_qda(pi, mu0, mu1, sigma0_inv, sigma1_inv, x0bounds, x1bounds):
-    xx0, xx1 = np.meshgrid(np.linspace(x0bounds[0], x0bounds[1], 100), np.linspace(x1bounds[0], x1bounds[1], 100))
-    a, b, c, d, e, f = conic_coefs(pi, mu0, mu1, sigma0_inv, sigma1_inv)
-    zz = a*xx1**2 + b*xx0**2 + c*xx0*xx1 + d*xx1 + e*xx0 + f
-    return xx0, xx1, zz
-
-
 def log_probas_qda(xtest, pi, mu, sigma_inv):
+    """
+    Log of p(y=1|x) for QDA
+
+    Params:
+        xtest (np.ndarray): matrix of datapoints on which to compute the log probabilities
+        pi (float): MLE for pi
+        mu (np.ndarray): MLE for mu
+        sigma_inv (np.ndarray): inverse of MLE for sigma
+
+    Returns:
+        np.ndarray: vector of predicted labels
+    """
     return - 0.5 * np.log(1 / np.linalg.det(sigma_inv)) \
            - 0.5*np.dot((xtest - mu).T, np.dot(sigma_inv, xtest - mu)) \
            + np.log(pi)
 
 
 def classify_qda(xtest_mat, pi, mu0, mu1, sigma0_inv, sigma1_inv):
+    """
+    Classify according to fitted QDA
+
+    Params:
+        xtest_mat(np.ndarray): matrix of datapoints on which to compute the log probabilities
+        pi (float): MLE for pi
+        mu0 (np.ndarray): MLE for mu0
+        mu1 (np.ndarray): MLE for mu1
+        sigma0_inv(np.ndarray): inverse of MLE for sigma0
+        sigma1_inv (np.ndarray): inverse of MLE for sigma1
+
+    Returns:
+        np.ndarray: vector of predicted labels
+    """
     n = xtest_mat.shape[0]
     ytest = np.zeros((n, ))
     for i in range(0, n):
