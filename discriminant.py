@@ -128,8 +128,10 @@ def posterior_proba_lda(xtest, pi, w, b):
 
 
 def classify_lda(xtest_mat, pi, w, b):
-    n = xtest_mat.shape[0]
-    ytest = np.zeros((n,))
+    probas = posterior_proba_lda(xtest_mat, pi, w, b)
+    ytest = np.sign(probas - 0.5)
+    ytest[ytest == -1] = 0
+    return ytest
 
 
 def conic_coefs(pi, mu0, mu1, sigma0, sigma1):
@@ -154,7 +156,7 @@ def contours_qda(pi, mu0, mu1, sigma0_inv, sigma1_inv, x0bounds, x1bounds):
     return xx0, xx1, zz
 
 
-def discriminant_func_qda(xtest, pi, mu, sigma_inv):
+def log_probas_qda(xtest, pi, mu, sigma_inv):
     return - 0.5 * np.log(1 / np.linalg.det(sigma_inv)) \
            - 0.5*np.dot((xtest - mu).T, np.dot(sigma_inv, xtest - mu)) \
            + np.log(pi)
@@ -164,7 +166,7 @@ def classify_qda(xtest_mat, pi, mu0, mu1, sigma0_inv, sigma1_inv):
     n = xtest_mat.shape[0]
     ytest = np.zeros((n, ))
     for i in range(0, n):
-        ytest[i] = np.sign(discriminant_func_qda(xtest_mat[i, :], pi, mu1, sigma1_inv)
-                           - discriminant_func_qda(xtest_mat[i, :], 1 - pi, mu0, sigma0_inv))
+        ytest[i] = np.sign(log_probas_qda(xtest_mat[i, :], pi, mu1, sigma1_inv)
+                           - log_probas_qda(xtest_mat[i, :], 1 - pi, mu0, sigma0_inv))
     ytest[ytest == -1] = 0
     return ytest

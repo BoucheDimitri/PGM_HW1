@@ -8,6 +8,8 @@ import logistic
 importlib.reload(logistic)
 import discriminant
 importlib.reload(discriminant)
+import linear
+importlib.reload(linear)
 
 n1 = 50
 n2 = 50
@@ -36,7 +38,7 @@ sigma = discriminant.mle_sigma_lda(xypd)
 sigma_inv = np.linalg.inv(sigma)
 w = discriminant.get_w_lda(sigma_inv, mu0, mu1)
 b = discriminant.get_b_lda(sigma_inv, mu0, mu1)
-ytest = discriminant.posterior_proba_lda(x, pi, w, b)
+ytest = discriminant.classify_lda(x, pi, w, b)
 
 fig, ax = plt.subplots()
 ax.scatter(x[:, 0], x[:, 1])
@@ -82,3 +84,14 @@ sep_x2 = logistic.proba_level_line(sep_x1, bwbis, 0.5)
 ax.plot(sep_x1, sep_x2)
 
 
+
+
+################LINREG TEST################################
+xaug = xlogistic = logistic.add_intercept_col(x)
+bw = linear.get_bw(xaug, y)
+ytest = linear.classify(xaug, bw)
+fig, ax = plt.subplots()
+ax.scatter(x[:, 0], x[:, 1])
+sep_x1 = np.linspace(ax.get_xlim()[0], ax.get_xlim()[1])
+sep_x2 = linear.proba_line(sep_x1, bw, 0.5)
+ax.plot(sep_x1, sep_x2)
