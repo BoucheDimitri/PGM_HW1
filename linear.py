@@ -1,3 +1,7 @@
+__author__ = "Dimitri Bouche - dimi.bouche@gmail.com"
+
+
+
 import numpy as np
 
 
