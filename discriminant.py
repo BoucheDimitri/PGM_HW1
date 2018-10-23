@@ -11,7 +11,7 @@ def mle_pi(xy):
     Returns:
        float: MLE for pi in LDA model
     """
-    return xy.y.sum() / xy.shape
+    return xy.y.sum() / xy.shape[0]
 
 
 def mle_mu(xy, i):
@@ -40,7 +40,7 @@ def mle_mus(xy):
     return mle_mu(xy, 0), mle_mu(xy, 1)
 
 
-def mle_sigma(xy):
+def mle_sigma(xy, i):
     """
     MLE for covariance matrix in LDA
 
@@ -50,10 +50,18 @@ def mle_sigma(xy):
     Returns:
        np.ndarray: MLE for sigma
     """
-    return (xy[xy.y == 0].iloc[:, :2].cov() + xy[xy.y == 1].iloc[:, :2].cov()).values
+    return xy[xy.y == i].iloc[:, :2].cov()
 
 
-def get_w(sigma_inv, mu0, mu1):
+def mle_sigma_lda(xy):
+    return mle_sigma(xy, 0) + mle_sigma(xy, 1)
+
+
+def mle_sigmas_qda(xy):
+    return mle_sigma(xy, 0), mle_sigma(xy, 1)
+
+
+def get_w_lda(sigma_inv, mu0, mu1):
     """
     Compute w vector of parameters from the MLE estimators
 
@@ -69,7 +77,7 @@ def get_w(sigma_inv, mu0, mu1):
     return np.dot(mu0 - mu1, sigma_inv)
 
 
-def get_b(sigma_inv, mu0, mu1):
+def get_b_lda(sigma_inv, mu0, mu1):
     """
     Compute intercept from the MLE estimators
 
@@ -84,7 +92,7 @@ def get_b(sigma_inv, mu0, mu1):
     return 0.5*np.dot(np.dot(mu1.T, sigma_inv), mu1) - 0.5*np.dot(np.dot(mu0.T, sigma_inv), mu0)
 
 
-def proba_level_line(x1, pi, w, b, q):
+def proba_level_line_lda(x1, pi, w, b, q):
     """
     Linear function that characterizes the line p(y=1|x) = q
 
@@ -101,7 +109,7 @@ def proba_level_line(x1, pi, w, b, q):
     return (1 / w[1]) * (np.log((pi * (1 - q)) / (q * (1 - pi))) - b - w[0] * x1)
 
 
-def posterior_proba(xtest, pi, w, b):
+def posterior_proba_lda(xtest, pi, w, b):
     """
     Compute the vector of posterior probabilities for classification
 
@@ -117,3 +125,43 @@ def posterior_proba(xtest, pi, w, b):
     xwtest = np.dot(xtest, w)
     pifrac = pi / (1 - pi)
     return 1 / (1 + pifrac * np.exp(xwtest) + b)
+
+
+def classify_lda():
+    return 0
+
+
+def conic_coefs(pi, mu0, mu1, sigma0, sigma1):
+    """
+    Compute the coefficient of the conic section defining the decision boundary for QDA
+    """
+    sigma0_inv = np.linalg.inv(sigma0)
+    sigma1_inv = np.linalg.inv(sigma1)
+    lamb0 = np.dot(mu0.T, sigma0_inv)
+    lamb1 = np.dot(mu1.T, sigma1_inv)
+    nu0 = - 0.5 * np.log(np.linalg.det(sigma0)) - 0.5 * np.dot(lamb0, mu0) + np.log(1 - pi)
+    nu1 = - 0.5 * np.log(np.linalg.det(sigma1)) - 0.5 * np.dot(lamb1, mu1) + np.log(pi)
+    diff_sig = sigma1_inv - sigma0_inv
+    diff_lamb = lamb1 - lamb0
+    return 0.5*diff_sig[1, 1], 0.5*diff_sig[0, 0], diff_sig[0, 1], - diff_lamb[1], - diff_lamb[0], nu0 - nu1
+
+
+def contours_qda(pi, mu0, mu1, sigma0_inv, sigma1_inv, x0bounds, x1bounds):
+    xx0, xx1 = np.meshgrid(np.linspace(x0bounds[0], x0bounds[1], 100), np.linspace(x1bounds[0], x1bounds[1], 100))
+    a, b, c, d, e, f = conic_coefs(pi, mu0, mu1, sigma0_inv, sigma1_inv)
+    zz = a*xx1**2 + b*xx0**2 + c*xx0*xx1 + d*xx1 + e*xx0 + f
+    return xx0, xx1, zz
+
+
+def discriminant_func_qda(xtest, pi, mu, sigma_inv):
+    return - 0.5 * np.log(1 / np.linalg.det(sigma_inv)) \
+           - 0.5*np.dot((xtest - mu).T, np.dot(sigma_inv, xtest - mu)) \
+           + np.log(pi)
+
+
+def classify_qda(xtest, pi, mu0, mu1, sigma0_inv, sigma1_inv):
+    return discriminant_func_qda(xtest, pi, mu1, sigma1_inv) / discriminant_func_qda(xtest, 1 - pi, mu0, sigma0_inv)
+
+
+#
+# def classify_qda()

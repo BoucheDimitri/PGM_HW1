@@ -3,7 +3,7 @@ import pandas as pd
 import os
 import matplotlib.pyplot as plt
 
-import LDA
+import discriminant
 
 # Path to the data
 path = os.getcwd() + "\\Data\\"
@@ -26,9 +26,9 @@ for lab in abc:
 # Compute MLE estimates of pi, mu0, mu1 and sigma for all three datasets and store them
 estimates = {}
 for lab in abc:
-    pi = LDA.mle_pi(data[(lab, "train")])
-    mu0, mu1 = LDA.mle_mus(data[(lab, "train")])
-    sigma = LDA.mle_sigma(data[(lab, "train")])
+    pi = discriminant.mle_pi(data[(lab, "train")])
+    mu0, mu1 = discriminant.mle_mus(data[(lab, "train")])
+    sigma = discriminant.mle_sigma_lda(data[(lab, "train")])
     estimates[lab] = (pi, mu0, mu1, sigma)
 
 
@@ -37,8 +37,8 @@ params = {}
 for lab in abc:
     print(estimates[lab][3])
     sigma_inv = np.linalg.inv(estimates[lab][3])
-    w = LDA.get_w(sigma_inv, estimates[lab][1], estimates[lab][2])
-    b = LDA.get_b(sigma_inv, estimates[lab][1], estimates[lab][2])
+    w = discriminant.get_w_lda(sigma_inv, estimates[lab][1], estimates[lab][2])
+    b = discriminant.get_b_lda(sigma_inv, estimates[lab][1], estimates[lab][2])
     params[lab] = (w, b)
 
 
@@ -47,7 +47,7 @@ for lab in abc:
     fig, ax = plt.subplots()
     ax.scatter(data[(lab, "train")].x1, data[(lab, "train")].x2)
     sep_x1 = np.linspace(ax.get_xlim()[0], ax.get_xlim()[1])
-    sep_x2 = LDA.proba_level_line(sep_x1, estimates[lab][0], params[lab][0], params[lab][1], 0.5)
+    sep_x2 = discriminant.proba_level_line_lda(sep_x1, estimates[lab][0], params[lab][0], params[lab][1], 0.5)
     ax.plot(sep_x1, sep_x2)
 
 
