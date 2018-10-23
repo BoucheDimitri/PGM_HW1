@@ -2,6 +2,7 @@ import numpy as np
 import pandas as pd
 import os
 import matplotlib.pyplot as plt
+plt.rcParams.update({'font.size': 18})
 import importlib
 
 import discriminant
@@ -40,7 +41,7 @@ for lab in abc:
 
 
 
-####################### LDA ###########################################################
+####################### LDA ########################################################################################
 est_lda = {}
 params_lda = {}
 pred_lda = {}
@@ -67,7 +68,7 @@ for lab in abc:
 
 
 
-###################### LOGISTIC ##########################################################
+###################### LOGISTIC ####################################################################################
 params_logistic = {}
 pred_logistic = {}
 scores_logistic = {}
@@ -90,7 +91,7 @@ for lab in abc:
 
 
 
-###################### LINEAR ##########################################################
+###################### LINEAR ######################################################################################
 params_linear= {}
 pred_linear = {}
 scores_linear = {}
@@ -111,8 +112,7 @@ for lab in abc:
 
 
 
-
-####################### QDA ###########################################################
+####################### QDA ########################################################################################
 est_qda = {}
 pred_qda = {}
 scores_qda = {}
@@ -135,22 +135,56 @@ for lab in abc:
 
 
 
+################################PRINT SCORES########################################################################
+print(scores_lda)
+print(scores_logistic)
+print(scores_linear)
+print(scores_qda)
 
 
 
-
-
-
-
-
-
-
+################################ SYNTHESIS PLOTS ###################################################################
 
 
 # Plot the data and the separation lines
 for lab in abc:
-    fig, ax = plt.subplots()
-    ax.scatter(data[(lab, "train")].x1, data[(lab, "train")].x2)
-    sep_x1 = np.linspace(ax.get_xlim()[0], ax.get_xlim()[1])
-    sep_x2 = discriminant.proba_level_line_lda(sep_x1, est_lda[lab][0], params_lda[lab][0], params_lda[lab][1], 0.5)
-    ax.plot(sep_x1, sep_x2)
+    fig, axes = plt.subplots(2, 2)
+    xypd = data[(lab, "train")]
+    # LDA
+    axes[0, 0].scatter(xypd[xypd.y == 0].x1, xypd[xypd.y == 0].x2, label="0")
+    axes[0, 0].scatter(xypd[xypd.y == 1].x1, xypd[xypd.y == 1].x2, label="1")
+    xlim = axes[0, 0].get_xlim()
+    ylim = axes[0, 0].get_ylim()
+    x1 = np.linspace(axes[0, 0].get_xlim()[0], axes[0, 0].get_xlim()[1])
+    x2_lda = discriminant.proba_level_line_lda(x1, est_lda[lab][0], params_lda[lab][0], params_lda[lab][1], 0.5)
+    axes[0, 0].plot(x1, x2_lda, c="g", label="p(y=1|x) = 0.5")
+    axes[0, 0].set_ylim(ylim)
+    axes[0, 0].legend()
+    axes[0, 0].set_title("LDA")
+    # Logistic
+    axes[0, 1].scatter(xypd[xypd.y == 0].x1, xypd[xypd.y == 0].x2, label="0")
+    axes[0, 1].scatter(xypd[xypd.y == 1].x1, xypd[xypd.y == 1].x2, label="1")
+    x2_logistic = logistic.proba_line(x1, params_logistic[lab], 0.5)
+    axes[0, 1].plot(x1, x2_logistic, c="g", label="p(y=1|x) = 0.5")
+    axes[0, 1].set_ylim(ylim)
+    axes[0, 1].set_title("Logistic")
+    # Linear
+    axes[1, 0].scatter(xypd[xypd.y == 0].x1, xypd[xypd.y == 0].x2, label="0")
+    axes[1, 0].scatter(xypd[xypd.y == 1].x1, xypd[xypd.y == 1].x2, label="1")
+    x2_linear = linear.proba_line(x1, params_logistic[lab], 0.5)
+    axes[1, 0].plot(x1, x2_linear, c="g", label="p(y=1|x) = 0.5")
+    axes[1, 0].set_ylim(ylim)
+    axes[1, 0].set_title("Linear")
+    # QDA
+    axes[1, 1].scatter(xypd[xypd.y == 0].x1, xypd[xypd.y == 0].x2, label="0")
+    axes[1, 1].scatter(xypd[xypd.y == 1].x1, xypd[xypd.y == 1].x2, label="1")
+    xx1, xx2 = np.meshgrid(np.linspace(xlim[0], xlim[1], 1000), np.linspace(ylim[0], ylim[1], 1000))
+    a, b, c, d, e, f = discriminant.conic_coefs(est_qda[lab][0],
+                                                est_qda[lab][1],
+                                                est_qda[lab][2],
+                                                est_qda[lab][3],
+                                                est_qda[lab][4])
+    zz = a * xx2 ** 2 + b * xx1 ** 2 + c * xx1 * xx2 + d * xx2 + e * xx1 + f
+    axes[1, 1].contour(xx1, xx2, zz, [0], colors="g", label="p(y=1|x) = 0.5")
+    axes[1, 1].set_title("QDA")
+    plt.suptitle("Dataset " + lab)
